@@ -1,4 +1,11 @@
 from scrapy import cmdline
 
-search_str = "中文"
-cmdline.execute("scrapy crawl playlist -a search_str={}".format(search_str).split())
+MUSIC_U = (
+    ""
+)
+search_str = "kksk"
+cmdline.execute(
+    "scrapy crawl playlist -a search_str={} -a MUSIC_U={}".format(
+        search_str, MUSIC_U
+    ).split()
+)

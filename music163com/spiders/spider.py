@@ -12,14 +12,16 @@ class Music163ComSpider(scrapy.spiders.Spider):
     name = "playlist"  # 搜索网易云歌单并保存相关信息
     allowed_domains = ["music.163.com"]
 
-    def __init__(self, search_str):
+    def __init__(self, search_str, MUSIC_U):
         super(Music163ComSpider, self).__init__()
         self.search_str = search_str
+        self.cookies = {"MUSIC_U": MUSIC_U} if MUSIC_U else {}
 
     def start_requests(self):
         search_url = "https://music.163.com/weapi/cloudsearch/get/web"
-        # 总共能前 20 条搜索结果
-        for i in range(1):
+
+        # 500 < 30 / 页 * 17
+        for i in range(17):
             # 构造提交数据形式，下同
             post_data = (
                 '{{"hlpretag":"<span class=\\"s-fc7\\">","hlposttag":"</span>","s":"{}","type":"1000","offset":"{}",'
@@ -31,6 +33,7 @@ class Music163ComSpider(scrapy.spiders.Spider):
             yield FormRequest(
                 url=search_url,
                 formdata=Encrypt.encrypt(post_data),
+                cookies=self.cookies,
                 callback=self.search_parse,
             )
 
@@ -57,6 +60,7 @@ class Music163ComSpider(scrapy.spiders.Spider):
         playlist_detail = json.loads(response.text)["playlist"]
         # 获取歌单名和歌单中的歌曲信息
         title = playlist_detail["name"]
+        id = playlist_detail["id"]
         songs = playlist_detail["trackIds"]
 
         for song in songs:
@@ -68,7 +72,7 @@ class Music163ComSpider(scrapy.spiders.Spider):
                 url=song_url,
                 formdata=Encrypt.encrypt(post_data),
                 callback=self.song_parse,
-                meta={"playlist_title": title},
+                meta={"playlist_title": "{}_{}".format(title, id)},
                 dont_filter=True,
             )
 
@@ -78,6 +82,7 @@ class Music163ComSpider(scrapy.spiders.Spider):
 
         song_detail = json.loads(response.text)["songs"][0]
         # 获取歌曲各项信息
+        _id = song_detail["id"]
         name = song_detail["name"]
         time = song_detail["dt"]
         artists = " / ".join(map(lambda x: x["name"], song_detail["ar"]))  # 多个创作者用 / 分开
@@ -86,6 +91,7 @@ class Music163ComSpider(scrapy.spiders.Spider):
         # 制作 item
         item = Music163ComItem()
         item["playlist_title"] = playlist_title
+        item["_id"] = _id
         item["name"] = name
         item["time"] = time
         item["artists"] = artists
