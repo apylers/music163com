@@ -18,8 +18,8 @@ class Music163ComSpider(scrapy.spiders.Spider):
 
     def start_requests(self):
         search_url = "https://music.163.com/weapi/cloudsearch/get/web"
-        # 总共能获取 10 页搜索结果
-        for i in range(10):
+        # 总共能前 20 条搜索结果
+        for i in range(1):
             # 构造提交数据形式，下同
             post_data = (
                 '{{"hlpretag":"<span class=\\"s-fc7\\">","hlposttag":"</span>","s":"{}","type":"1000","offset":"{}",'
